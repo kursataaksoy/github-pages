@@ -1,0 +1,677 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<b:theme version="2.0" xmlns:b="http://www.google.com/2005/gml/b">
+  <b:author>Your Name</b:author>
+  <b:description>Kişisel Finans Takibi Uygulaması</b:description>
+  <!-- CSS Kodları -->
+  <b:skin><![CDATA[
+    :root {
+      --primary-color: #5563DE;
+      --secondary-color: #36a2eb;
+      --accent-color: #27ae60;
+      --danger-color: #e74c3c;
+      --bg-color: #f4f7fc;
+      --card-bg: #ffffff;
+      --font-family: 'Poppins', sans-serif;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: var(--font-family);
+      background: var(--bg-color);
+      color: #333;
+      line-height: 1.6;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      padding: 30px 40px;
+    }
+    
+    h2 {
+      color: var(--primary-color);
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    
+    .month-selector {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+    
+    .summary p {
+      font-size: 18px;
+    }
+    
+    button {
+      display: block;
+      width: 100%;
+      background-color: var(--primary-color);
+      color: #fff;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      margin: 10px 0;
+    }
+    
+    button:hover {
+      background-color: #3f50b5;
+      transform: translateY(-2px);
+    }
+    
+    .list-container {
+      margin-bottom: 30px;
+    }
+    
+    .list-container > h3 {
+      margin-bottom: 10px;
+      color: var(--primary-color);
+      font-weight: 500;
+    }
+    
+    .item {
+      background: #f7f7f7;
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    
+    .item button {
+      margin: 5px 5px 5px 0;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    
+    .btn-delete {
+      background-color: var(--danger-color);
+      color: #fff;
+    }
+    
+    .btn-delete:hover {
+      background-color: #c0392b;
+    }
+    
+    .btn-pay {
+      background-color: var(--accent-color);
+      color: #fff;
+    }
+    
+    .btn-pay:hover {
+      background-color: #1e8449;
+    }
+    
+    /* Progress Bar */
+    .progress-container {
+      width: 100%;
+      background-color: #e0e0e0;
+      border-radius: 25px;
+      overflow: hidden;
+      margin-top: 10px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+    }
+    
+    .progress-bar {
+      height: 20px;
+      width: 0%;
+      background: linear-gradient(90deg, #56ab2f, #a8e063);
+      border-radius: 25px;
+      text-align: center;
+      line-height: 20px;
+      color: #fff;
+      font-weight: 600;
+      transition: width 0.5s ease;
+    }
+    
+    /* Chart */
+    canvas {
+      margin: 20px 0;
+      max-width: 100%;
+    }
+    
+    /* Responsive */
+    @media (max-width: 600px) {
+      .container {
+        padding: 20px;
+      }
+      
+      .summary {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      button {
+        font-size: 14px;
+        padding: 12px 16px;
+      }
+      
+      .summary p {
+        font-size: 16px;
+      }
+    }
+  ]]></b:skin>
+  
+  <!-- HTML ve JavaScript Kodları -->
+  <b:template-skin><![CDATA[
+    <!-- Google Fonts ve Chart.js dahil ediliyor -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <div class="container">
+      <h2>Kişisel Finans Takibi</h2>
+      
+      <!-- AY SEÇİCİ VE YENİ AY EKLEME -->
+      <div class="month-selector">
+        <label for="monthSelect">Ay Seçin:</label>
+        <select id="monthSelect" onchange="ayDegistir(this.value)"></select>
+        <button onclick="yeniAyEkle()">Yeni Ay Ekle</button>
+      </div>
+      
+      <canvas id="donutChart"></canvas>
+      
+      <div class="summary">
+        <!-- Toplam bakiye: Banka + Hisse + Kripto değerleri -->
+        <p>Toplam Bakiye: <span id="toplamBakiye">0</span> TL</p>
+        <p>Ay Sonu Beklenen Bakiye: <span id="beklenenBakiye">0</span> TL</p>
+      </div>
+      
+      <!-- BANKA HESAPLARI -->
+      <div class="list-container">
+        <h3>Banka Hesapları</h3>
+        <div id="bankalar"></div>
+        <button onclick="bankaEkle()">Banka Ekle</button>
+      </div>
+      
+      <!-- Toplam Borç Ekranı -->
+      <div class="list-container">
+        <h3>Toplam Banka Borcu</h3>
+        <p id="toplamBorc" style="font-weight:600;">Toplam Borç: 0 TL | Ödenen: 0 TL | Kalan: 0 TL</p>
+      </div>
+      
+      <!-- SABİT GİDER -->
+      <div class="list-container">
+        <h3>Sabit Giderler</h3>
+        <div id="giderler"></div>
+        <button onclick="giderEkle()">Sabit Gider Ekle</button>
+        <p id="toplamSabitGider" style="font-weight:600; margin-top:10px;">Toplam Sabit Gider: 0 TL</p>
+      </div>
+      
+      <!-- HİSSE SENETLERİ -->
+      <div class="list-container">
+        <h3>Hisse Senetleri (Türk Borsası)</h3>
+        <div id="hisseSenetleri"></div>
+        <button onclick="hisseEkle()">Hisse Ekle</button>
+      </div>
+      
+      <!-- KRİPTO PARALAR -->
+      <div class="list-container">
+        <h3>Kripto Paralar</h3>
+        <div id="kriptoParalar"></div>
+        <button onclick="kriptoEkle()">Kripto Ekle</button>
+      </div>
+      
+      <!-- BİRİKİM HEDEFİ -->
+      <div class="list-container">
+        <h3>Birikim Hedefi</h3>
+        <button onclick="hedefBelirle()">Hedef Belirle</button>
+        <div class="progress-container">
+          <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+      </div>
+    </div>
+    
+    <script>
+      /***** AY VE VERİ YÖNETİMİ *****/
+      let finansData = JSON.parse(localStorage.getItem("finansData")) || {};
+      if(Object.keys(finansData).length === 0) {
+        finansData["Şubat"] = {
+          bankalar: [],
+          sabitGiderler: [],
+          hisseSenetleri: [],
+          kriptoParalar: [],
+          birikimHedefi: 0
+        };
+      }
+      let activeMonth = localStorage.getItem("activeMonth") || Object.keys(finansData)[0];
+      
+      function updateMonthDropdown() {
+        const monthSelect = document.getElementById("monthSelect");
+        monthSelect.innerHTML = "";
+        for (let ay in finansData) {
+          let option = document.createElement("option");
+          option.value = ay;
+          option.textContent = ay;
+          if(ay === activeMonth) option.selected = true;
+          monthSelect.appendChild(option);
+        }
+      }
+      
+      function ayDegistir(secilenAy) {
+        activeMonth = secilenAy;
+        localStorage.setItem("activeMonth", activeMonth);
+        refreshUI();
+      }
+      
+      function yeniAyEkle() {
+        let yeniAy = prompt("Yeni Ayı Girin (örn: Mart):");
+        if (!yeniAy) return;
+        yeniAy = yeniAy.trim();
+        if(finansData[yeniAy]) {
+          alert("Bu ay zaten mevcut!");
+          return;
+        }
+        const prevBankalar = JSON.parse(JSON.stringify(finansData[activeMonth].bankalar));
+        const prevSabitGiderler = JSON.parse(JSON.stringify(finansData[activeMonth].sabitGiderler));
+        
+        finansData[yeniAy] = {
+          bankalar: prevBankalar,
+          sabitGiderler: prevSabitGiderler,
+          hisseSenetleri: [],
+          kriptoParalar: [],
+          birikimHedefi: finansData[activeMonth].birikimHedefi
+        };
+        activeMonth = yeniAy;
+        saveData();
+        updateMonthDropdown();
+        refreshUI();
+      }
+      
+      function saveData() {
+        localStorage.setItem("finansData", JSON.stringify(finansData));
+        localStorage.setItem("activeMonth", activeMonth);
+      }
+      
+      /***** BANKA İŞLEMLERİ *****/
+      function bankaEkle() {
+        let bankaAdi = prompt("Banka Adı:");
+        let bakiye = parseFloat(prompt("Başlangıç Bakiyesi (TL):")) || 0;
+        if (bankaAdi) {
+          let borc = parseFloat(prompt("Borc Miktarı (TL) (Varsayılan 0):")) || 0;
+          let odenen = 0;
+          if(borc > 0) {
+            odenen = parseFloat(prompt("Ödenen Tutar (TL) (Varsayılan 0):")) || 0;
+          }
+          finansData[activeMonth].bankalar.push({ ad: bankaAdi, bakiye: bakiye, borc: borc, odenen: odenen });
+          saveData();
+          bankalariGoster();
+        }
+      }
+      
+      function bankalariGoster() {
+        let bankalarDiv = document.getElementById("bankalar");
+        bankalarDiv.innerHTML = "";
+        finansData[activeMonth].bankalar.forEach((banka, index) => {
+          let progressHtml = "";
+          if(banka.borc && banka.borc > 0) {
+            let progress = Math.min((banka.odenen / banka.borc) * 100, 100);
+            progressHtml = `
+              <div class="progress-container">
+                <div class="progress-bar" style="width: ${progress}%; background: linear-gradient(90deg, #ff8c00, #ffa500);">
+                  ${Math.floor(progress)}%
+                </div>
+              </div>
+            `;
+          }
+          bankalarDiv.innerHTML += `
+            <div class="item">
+              <div>
+                <span><strong>${banka.ad}</strong>: ${banka.bakiye} TL</span>
+                <br>
+                <button onclick="bankaBakiyesiDuzenle(${index})">Bakiye Düzenle</button>
+                <button onclick="bankaBorcuDuzenle(${index})">Borç Düzenle</button>
+                ${progressHtml}
+              </div>
+              <button class="btn-delete" onclick="bankaSil(${index})">Sil</button>
+            </div>
+          `;
+        });
+        guncelleGenelBakiye();
+        beklenenBakiyeHesapla();
+        guncelleGrafik();
+        guncelleToplamBorc();
+      }
+      
+      function bankaSil(index) {
+        finansData[activeMonth].bankalar.splice(index, 1);
+        saveData();
+        bankalariGoster();
+      }
+      
+      function bankaBorcuDuzenle(index) {
+        let banka = finansData[activeMonth].bankalar[index];
+        let borc = parseFloat(prompt("Toplam Borç Miktarını Girin:", banka.borc || 0)) || 0;
+        let odenen = parseFloat(prompt("Ödenen Tutarı Girin:", banka.odenen || 0)) || 0;
+        banka.borc = borc;
+        banka.odenen = odenen;
+        saveData();
+        bankalariGoster();
+      }
+      
+      function bankaBakiyesiDuzenle(index) {
+        let banka = finansData[activeMonth].bankalar[index];
+        let yeniBakiye = parseFloat(prompt("Yeni Bakiye Değerini Girin:", banka.bakiye)) || banka.bakiye;
+        banka.bakiye = yeniBakiye;
+        saveData();
+        bankalariGoster();
+      }
+      
+      function guncelleToplamBorc() {
+        const totalDebt = finansData[activeMonth].bankalar.reduce((sum, banka) => sum + (banka.borc || 0), 0);
+        const totalOdenen = finansData[activeMonth].bankalar.reduce((sum, banka) => sum + (banka.odenen || 0), 0);
+        const kalan = totalDebt - totalOdenen;
+        document.getElementById("toplamBorc").innerText = `Toplam Borç: ${totalDebt.toFixed(2)} TL | Ödenen: ${totalOdenen.toFixed(2)} TL | Kalan: ${kalan.toFixed(2)} TL`;
+      }
+      
+      /***** SABİT GİDER İŞLEMLERİ *****/
+      function giderEkle() {
+        let giderAdi = prompt("Gider Adı:");
+        let miktar = parseFloat(prompt("Gider Miktarı (TL):")) || 0;
+        if (giderAdi) {
+          finansData[activeMonth].sabitGiderler.push({ ad: giderAdi, miktar: miktar, odendi: false });
+          saveData();
+          giderleriGoster();
+        }
+      }
+      
+      function giderleriGoster() {
+        let giderlerDiv = document.getElementById("giderler");
+        giderlerDiv.innerHTML = "";
+        finansData[activeMonth].sabitGiderler.forEach((gider, index) => {
+          giderlerDiv.innerHTML += `
+            <div class="item">
+              <span>${gider.ad}: ${gider.miktar} TL</span>
+              <div>
+                <button class="btn-pay" onclick="giderOde(${index})">${gider.odendi ? "✅" : "Öde"}</button>
+                <button class="btn-delete" onclick="giderSil(${index})">Sil</button>
+              </div>
+            </div>
+          `;
+        });
+        const toplamSabit = finansData[activeMonth].sabitGiderler.reduce((sum, g) => sum + g.miktar, 0);
+        document.getElementById("toplamSabitGider").innerText = "Toplam Sabit Gider: " + toplamSabit.toFixed(2) + " TL";
+        
+        beklenenBakiyeHesapla();
+      }
+      
+      function giderOde(index) {
+        finansData[activeMonth].sabitGiderler[index].odendi = !finansData[activeMonth].sabitGiderler[index].odendi;
+        saveData();
+        giderleriGoster();
+      }
+      
+      function giderSil(index) {
+        finansData[activeMonth].sabitGiderler.splice(index, 1);
+        saveData();
+        giderleriGoster();
+      }
+      
+      /***** HİSSE SENEDİ İŞLEMLERİ (Türk Borsası) *****/
+      function hisseEkle() {
+        let sembol = prompt("Hisse Sembolü (örn: GARAN, AKBNK):");
+        if (!sembol) return;
+        sembol = sembol.toUpperCase();
+        let lot = parseFloat(prompt("Lot Miktarı:")) || 0;
+        if (lot > 0) {
+          finansData[activeMonth].hisseSenetleri.push({ sembol: sembol, lot: lot, fiyat: 0 });
+          saveData();
+          hisseSenetleriGoster();
+          hisseFiyatGuncelle(sembol);
+        }
+      }
+      
+      function hisseSenetleriGoster() {
+        let hisseDiv = document.getElementById("hisseSenetleri");
+        hisseDiv.innerHTML = "";
+        finansData[activeMonth].hisseSenetleri.forEach((hisse, index) => {
+          let toplamDeger = (hisse.lot * hisse.fiyat).toFixed(2);
+          hisseDiv.innerHTML += `
+            <div class="item">
+              <span>${hisse.sembol} - ${hisse.lot} Lot | Fiyat: ${hisse.fiyat} TL | Toplam: ${toplamDeger} TL</span>
+              <button class="btn-delete" onclick="hisseSil(${index})">Sil</button>
+            </div>
+          `;
+        });
+        guncelleGenelBakiye();
+        guncelleGrafik();
+      }
+      
+      function hisseSil(index) {
+        finansData[activeMonth].hisseSenetleri.splice(index, 1);
+        saveData();
+        hisseSenetleriGoster();
+      }
+      
+      function hisseFiyatGuncelle(sembol) {
+        fetch("https://scanner.tradingview.com/tvc/scan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            symbols: { tickers: [ "BIST:" + sembol ] },
+            columns: ["close"]
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data && data.data && data.data[0] && data.data[0].d && data.data[0].d[0]) {
+            let fiyat = data.data[0].d[0];
+            finansData[activeMonth].hisseSenetleri = finansData[activeMonth].hisseSenetleri.map(h =>
+              h.sembol === sembol ? { ...h, fiyat: parseFloat(fiyat) } : h
+            );
+            saveData();
+            hisseSenetleriGoster();
+          }
+        })
+        .catch(err => {
+          console.error("Hisse fiyatı güncellenemedi:", err);
+        });
+      }
+      
+      /***** KRİPTO PARA İŞLEMLERİ *****/
+      function kriptoEkle() {
+        let coinId = prompt("Kripto Coin ID (örn: bitcoin, ethereum):");
+        if (!coinId) return;
+        coinId = coinId.toLowerCase();
+        let miktar = parseFloat(prompt("Miktar:")) || 0;
+        if (miktar > 0) {
+          finansData[activeMonth].kriptoParalar.push({ id: coinId, miktar: miktar, fiyat: 0 });
+          saveData();
+          kriptoGoster();
+          kriptoFiyatGuncelle(coinId);
+        }
+      }
+      
+      function kriptoGoster() {
+        let kriptoDiv = document.getElementById("kriptoParalar");
+        kriptoDiv.innerHTML = "";
+        finansData[activeMonth].kriptoParalar.forEach((coin, index) => {
+          let toplamDeger = (coin.miktar * coin.fiyat).toFixed(2);
+          kriptoDiv.innerHTML += `
+            <div class="item">
+              <span>${coin.id} - Miktar: ${coin.miktar} | Fiyat: ${coin.fiyat} TL | Toplam: ${toplamDeger} TL</span>
+              <button class="btn-delete" onclick="kriptoSil(${index})">Sil</button>
+            </div>
+          `;
+        });
+        guncelleGenelBakiye();
+        guncelleGrafik();
+      }
+      
+      function kriptoSil(index) {
+        finansData[activeMonth].kriptoParalar.splice(index, 1);
+        saveData();
+        kriptoGoster();
+      }
+      
+      function kriptoFiyatGuncelle(coinId) {
+        fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=try`)
+          .then(response => response.json())
+          .then(data => {
+            if (data && data[coinId] && data[coinId].try) {
+              finansData[activeMonth].kriptoParalar = finansData[activeMonth].kriptoParalar.map(coin =>
+                coin.id === coinId ? { ...coin, fiyat: parseFloat(data[coinId].try) } : coin
+              );
+              saveData();
+              kriptoGoster();
+            }
+          })
+          .catch(err => {
+            console.error("Kripto fiyatı güncellenemedi:", err);
+          });
+      }
+      
+      /***** PERİYODİK FİYAT GÜNCELLEMELER *****/
+      function guncelleTumHisseler() {
+        finansData[activeMonth].hisseSenetleri.forEach(hisse => {
+          hisseFiyatGuncelle(hisse.sembol);
+        });
+      }
+      
+      function guncelleTumKripto() {
+        finansData[activeMonth].kriptoParalar.forEach(coin => {
+          kriptoFiyatGuncelle(coin.id);
+        });
+      }
+      
+      setInterval(() => {
+        guncelleTumHisseler();
+        guncelleTumKripto();
+      }, 30000);
+      
+      /***** GENEL BAKİYE & BEKLENEN BAKİYE HESAPLAMA *****/
+      function guncelleGenelBakiye() {
+        const nakit = finansData[activeMonth].bankalar.reduce((sum, b) => sum + b.bakiye, 0);
+        const hisseDegeri = finansData[activeMonth].hisseSenetleri.reduce((sum, h) => sum + (h.lot * h.fiyat), 0);
+        const kriptoDegeri = finansData[activeMonth].kriptoParalar.reduce((sum, coin) => sum + (coin.miktar * coin.fiyat), 0);
+        const toplam = nakit + hisseDegeri + kriptoDegeri;
+        document.getElementById("toplamBakiye").innerText = toplam.toFixed(2);
+      }
+      
+      function beklenenBakiyeHesapla() {
+        const nakit = finansData[activeMonth].bankalar.reduce((sum, b) => sum + b.bakiye, 0);
+        const toplamGider = finansData[activeMonth].sabitGiderler.filter(g => !g.odendi).reduce((sum, g) => sum + g.miktar, 0);
+        const beklenenBakiye = nakit - toplamGider;
+        document.getElementById("beklenenBakiye").innerText = beklenenBakiye.toFixed(2);
+        guncelleProgressBar(beklenenBakiye);
+      }
+      
+      /***** BİRİKİM HEDEFİ & PROGRESS BAR *****/
+      function hedefBelirle() {
+        const hedef = parseFloat(prompt("Birikim Hedefinizi Girin (TL):")) || 0;
+        finansData[activeMonth].birikimHedefi = hedef;
+        saveData();
+        beklenenBakiyeHesapla();
+      }
+      
+      function guncelleProgressBar(beklenenBakiye) {
+        const progressBar = document.getElementById("progressBar");
+        const hedef = finansData[activeMonth].birikimHedefi;
+        if (hedef > 0) {
+          const progress = Math.min((beklenenBakiye / hedef) * 100, 100);
+          progressBar.style.width = progress + "%";
+          progressBar.innerText = Math.floor(progress) + "%";
+        } else {
+          progressBar.style.width = "0%";
+          progressBar.innerText = "Hedef Yok";
+        }
+      }
+      
+      /***** DONUT GRAFİĞİNİN GÜNCELLENMESİ *****/
+      let chart;
+      function guncelleGrafik() {
+        const ctx = document.getElementById("donutChart").getContext("2d");
+        if (chart) chart.destroy();
+        
+        const bankLabels = finansData[activeMonth].bankalar.map(b => b.ad);
+        const bankValues = finansData[activeMonth].bankalar.map(b => b.bakiye);
+        
+        const hisseLabels = finansData[activeMonth].hisseSenetleri.map(h => h.sembol);
+        const hisseValues = finansData[activeMonth].hisseSenetleri.map(h => h.lot * h.fiyat);
+        
+        const kriptoLabels = finansData[activeMonth].kriptoParalar.map(coin => coin.id);
+        const kriptoValues = finansData[activeMonth].kriptoParalar.map(coin => coin.miktar * coin.fiyat);
+        
+        const labels = bankLabels.concat(hisseLabels, kriptoLabels);
+        const data = bankValues.concat(hisseValues, kriptoValues);
+        
+        const backgroundColors = [
+          "#ff6384", "#36a2eb", "#ffce56", "#8e44ad", "#e67e22",
+          "#2ecc71", "#3498db", "#9b59b6", "#f1c40f", "#e67e22",
+          "#1abc9c", "#34495e"
+        ];
+        
+        chart = new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels: labels,
+            datasets: [{
+              data: data,
+              backgroundColor: backgroundColors.slice(0, labels.length)
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'bottom'
+              }
+            }
+          }
+        });
+      }
+      
+      function refreshUI() {
+        bankalariGoster();
+        giderleriGoster();
+        hisseSenetleriGoster();
+        kriptoGoster();
+        beklenenBakiyeHesapla();
+        guncelleToplamBorc();
+      }
+      
+      function guncelleToplamBorc() {
+        const totalDebt = finansData[activeMonth].bankalar.reduce((sum, banka) => sum + (banka.borc || 0), 0);
+        const totalOdenen = finansData[activeMonth].bankalar.reduce((sum, banka) => sum + (banka.odenen || 0), 0);
+        const kalan = totalDebt - totalOdenen;
+        document.getElementById("toplamBorc").innerText = `Toplam Borç: ${totalDebt.toFixed(2)} TL | Ödenen: ${totalOdenen.toFixed(2)} TL | Kalan: ${kalan.toFixed(2)} TL`;
+      }
+      
+      updateMonthDropdown();
+      refreshUI();
+    </script>
+  ]]></b:template-skin>
+</b:theme>
